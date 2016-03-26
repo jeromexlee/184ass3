@@ -487,8 +487,24 @@ Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
 
   int num_samples = ns_aa; // total samples to evaluate
   Vector2D origin = Vector2D(x,y); // bottom left corner of the pixel
+  size_t w = sampleBuffer.w;
+  size_t h = sampleBuffer.h;
+  
+  if (ns_aa == 1){
+    return trace_ray(camera->generate_ray((x+0.5)/w,(y+0.5)/h),true);
+  }
 
-  return Spectrum();
+  Spectrum ss = Spectrum();
+  for(int i = 0; i < num_samples; i++){
+    Vector2D sample = gridSampler->get_sample().unit();
+    Spectrum samples = trace_ray(camera->generate_ray((x+sample.x)/(float)w,(y+sample.y)/(float)h),true);
+    // ss.r += samples.r; ss.g += samples.g; ss.b += samples.b;
+    ss += samples;
+  }
+  // ss.r = ss.r/ns_aa; ss.g = ss.g/ns_aa; ss.b = ss.b/ns_aa; 
+  ss = ss/(float)num_samples;
+  return ss;
+  // return Spectrum();
 }
 
 void PathTracer::raytrace_tile(int tile_x, int tile_y,

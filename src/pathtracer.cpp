@@ -421,29 +421,56 @@ Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& 
   const Vector3D& hit_p = r.o + r.d * isect.t;
   const Vector3D& w_out = w2o * (-r.d);
 
-  Spectrum L_out = Spectrum(), L_s;
-  float distToLight, pdf;
-  Vector3D w_in, wi;
-  int num_samples = ns_area_light;
-  for(SceneLight *l : scene->lights){
-    if (l->is_delta_light()){
-      num_samples = 1;
-    }
-    for(int i = 0; i < num_samples; i++){
-      L_s = l->sample_L(hit_p,&wi,&distToLight,&pdf);
-      w_in =w2o*wi;
-      if(w_in.z<0){
-        continue;
-      }
-      if(!bvh->intersect(Ray(EPS_D*wi+hit_p,wi,distToLight))){
-        L_out+=(isect.bsdf->f(w_out,w_in)*L_s*w_in.z)/pdf;
-      }
+  // Spectrum L_out = Spectrum(), L_s;
+  // float distToLight, pdf;
+  // Vector3D w_in, wi;
+  // int num_samples = ns_area_light;
+  // for(SceneLight *l : scene->lights){
+  //   if (l->is_delta_light()){
+  //     num_samples = 1;
+  //   }
+  //   for(int i = 0; i < num_samples; i++){
+  //     L_s = l->sample_L(hit_p,&wi,&distToLight,&pdf);
+  //     w_in =w2o*wi;
+  //     if(w_in.z<0){
+  //       continue;
+  //     }
+  //     if(!bvh->intersect(Ray(EPS_D*wi+hit_p,wi,distToLight))){
+  //       L_out+=(isect.bsdf->f(w_out,w_in)*L_s*w_in.z)/pdf;
+  //     }
       
+  //   }
+  //  L_out+=L_s/pdf; 
+  // }
+
+
+  // return L_out;
+  Spectrum L_out, L_sample;
+  Vector3D wi, w_in;
+  float distToLight, pdf;
+  Ray hitToSrc = Ray(r.o, r.d);
+  L_out = Spectrum();
+  int sampleNum = ns_area_light;
+
+  for (SceneLight* sl : scene->lights) {
+    if (sl->is_delta_light()) {
+      sampleNum = 1;
     }
-   L_out+=L_s/pdf; 
+    for (int i = 0; i < sampleNum; i++) {
+      L_sample = sl->sample_L(hit_p, &wi, &distToLight, &pdf);
+      w_in = w2o * wi;
+      if (w_in.z < 0) {
+        continue;
+      } else {
+        hitToSrc = Ray(EPS_D*wi + hit_p, wi, distToLight);
+        if (!bvh->intersect(hitToSrc)) {
+          L_sample = isect.bsdf->f(w_out, w_in)*L_sample*w_in.z;
+          L_out += L_sample/pdf;
+        }
+      }
+    }
+    L_out /= sampleNum;
   }
-
-
   return L_out;
 }
 

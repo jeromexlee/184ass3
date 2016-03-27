@@ -421,7 +421,28 @@ Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& 
   const Vector3D& hit_p = r.o + r.d * isect.t;
   const Vector3D& w_out = w2o * (-r.d);
 
-  Spectrum L_out;
+  Spectrum L_out = Spectrum(), L_s;
+  float distToLight, pdf;
+  Vector3D w_in, wi;
+  int num_samples = ns_area_light;
+  for(SceneLight *l : scene->lights){
+    if (l->is_delta_light()){
+      num_samples = 1;
+    }
+    for(int i = 0; i < num_samples; i++){
+      L_s = l->sample_L(hit_p,&wi,&distToLight,&pdf);
+      w_in =w2o*wi;
+      if(w_in.z<0){
+        continue;
+      }
+      if(!bvh->intersect(Ray(EPS_D*wi+hit_p,wi,distToLight))){
+        L_out+=(isect.bsdf->f(w_out,w_in)*L_s*w_in.z)/pdf;
+      }
+      
+    }
+   L_out+=L_s/pdf; 
+  }
+
 
   return L_out;
 }
@@ -455,7 +476,7 @@ Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
   // This line returns a color depending only on the normal vector 
   // to the surface at the intersection point.
   // Remove it when you are ready to begin Part 3.
-  return normal_shading(isect.n);
+  // return normal_shading(isect.n);
 
   // We only include the emitted light if the previous BSDF was a delta distribution
   // or if the previous ray came from the camera.

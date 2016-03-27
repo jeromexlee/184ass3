@@ -113,13 +113,19 @@ bool BVHAccel::intersect(const Ray& ray, BVHNode *node) const {
   // TODO Part 2, task 3:
   // Implement BVH intersection.
   // Currently, we just naively loop over every primitive.
-
-  for (Primitive *p : *(root->prims)) {
-    total_isects++;
-    if (p->intersect(ray)) 
-      return true;
+  double t0 = ray.min_t;
+  double t1 = ray.max_t;
+  if(!node->bb.intersect(ray, t0, t1)) return false;
+  if(node->isLeaf()){
+      for (Primitive *p : *(node->prims)) {
+      total_isects++;
+      if (p->intersect(ray)) 
+        return true;
+    }
   }
-  return false;
+  bool b1 = intersect(ray,node->l);
+  bool b2 = intersect(ray,node->r);
+  return b1 || b2;
 
 }
 
@@ -128,15 +134,21 @@ bool BVHAccel::intersect(const Ray& ray, Intersection* i, BVHNode *node) const {
   // TODO Part 2, task 3:
   // Implement BVH intersection.
   // Currently, we just naively loop over every primitive.
-
-  bool hit = false;
-  for (Primitive *p : *(root->prims)) {
-    total_isects++;
-    if (p->intersect(ray, i)) 
-      hit = true;
+  double t0 = ray.min_t;
+  double t1 = ray.max_t;
+  if(!node->bb.intersect(ray, t0, t1)) return false;
+  if (node->isLeaf()){
+    bool hit = false;
+    for (Primitive *p : *(node->prims)) {
+      total_isects++;
+      if (p->intersect(ray, i)) 
+        hit = true;
+    }
+    return hit;
   }
-  return hit;
-
+  bool b1 = intersect(ray,i,node->l);
+  bool b2 = intersect(ray,i,node->r);
+  return b1 || b2;
 }
 
 }  // namespace StaticScene

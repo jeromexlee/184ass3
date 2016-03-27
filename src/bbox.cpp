@@ -34,6 +34,30 @@ bool BBox::intersect(const Ray& r, double& t0, double& t1) const {
   
   return false;
 
+  // double tminx = (min.x - r.o.x) / r.d.x;
+  // double tmaxx = (max.x - r.o.x) / r.d.x;
+  // double tminy = (min.y - r.o.y) / r.d.y;
+  // double tmaxy = (max.y - r.o.y) / r.d.y;
+  // double tminz = (min.z - r.o.z) / r.d.z;
+  // double tmaxz = (max.z - r.o.z) / r.d.z;
+  // if (tminx > tmaxx) {
+  //   std::swap(tminx, tmaxx);  
+  // }
+  // if (tminy > tmaxy) {
+  //   std::swap(tminy, tmaxy);
+  // }
+  // if (tminz > tmaxz) {
+  //   std::swap(tminz, tmaxz);
+  // }
+  // double minVal = std::max(tminx, std::max(tminy, tminz));
+  // double maxVal = std::min(tmaxx, std::min(tmaxy, tmaxz));
+  // if (minVal > maxVal || minVal > t1 || maxVal < t0) {
+  //   return false;
+  // }
+  // t0 = minVal;
+  // t1 = maxVal;
+  // return true;
+
 }
 
 void BBox::draw(Color c) const {

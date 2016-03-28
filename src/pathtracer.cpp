@@ -510,7 +510,7 @@ Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
   // This line returns a color depending only on the normal vector 
   // to the surface at the intersection point.
   // Remove it when you are ready to begin Part 3.
-  // return normal_shading(isect.n);
+  return normal_shading(isect.n);
 
   // We only include the emitted light if the previous BSDF was a delta distribution
   // or if the previous ray came from the camera.

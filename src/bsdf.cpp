@@ -79,6 +79,13 @@ Spectrum GlossyBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) {
 // Refraction BSDF //
 
 Spectrum RefractionBSDF::f(const Vector3D& wo, const Vector3D& wi) {
+  // return Spectrum();
+  Vector3D w_in;
+  if (refract(wo, &w_in, ior)) {
+    if (w_in == wi) {
+      return transmittance/abs_cos_theta(wo);
+    }
+  }
   return Spectrum();
 }
 
@@ -86,13 +93,21 @@ Spectrum RefractionBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) 
 
   // TODO Part 5:
   // Implement RefractionBSDF
-  return Spectrum();
+  // return Spectrum();
+  refract(wo, wi, ior);
+  *pdf = 1;
+  return f(wo, *wi);
 }
 
 // Glass BSDF //
 
 Spectrum GlassBSDF::f(const Vector3D& wo, const Vector3D& wi) {
   // return Spectrum();
+  // Vector3D w_in;
+  // if(refract(wo, &w_in, ior)){
+
+  // }
+
   Vector3D w_in;
   if (!refract(wo, &w_in, ior)) {
     reflect(wo, &w_in);
@@ -138,6 +153,7 @@ Spectrum GlassBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) {
   // Compute Fresnel coefficient and either reflect or refract based on it.
   
   // return Spectrum();
+
   if (!refract(wo, wi, ior)) {
     *pdf = 1;
     reflect(wo, wi);

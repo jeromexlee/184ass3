@@ -105,6 +105,11 @@ Spectrum GlassBSDF::f(const Vector3D& wo, const Vector3D& wi) {
   // return Spectrum();
   // Vector3D w_in;
   // if(refract(wo, &w_in, ior)){
+  //   reflect(wo, &w_in);
+  //   if (w_in == wi) return reflectance/cos_theta(wo);
+  //   else return Spectrum();
+  // }
+  // else {
 
   // }
 
@@ -201,19 +206,26 @@ bool BSDF::refract(const Vector3D& wo, Vector3D* wi, float ior) {
   // ray entering the surface through vacuum.
 
   // return true;
-  if (wo.z > 0) {
-    *wi = Vector3D(-sin_theta(wo)*cos_phi(wo)*(1/ior),
-                   -sin_theta(wo)*sin_phi(wo)*(1/ior),
-                   -sqrt(1 - sin_theta(wo)*sin_theta(wo)*(1/(ior*ior))));
-    if (sin_theta(wo) >= ior) return false;
-    else return true;
-  }
-  else {
+  if (cos_theta(wo) > 0) {
+    // enter in the surface
+    *wi = Vector3D(-sin_theta(wo)*cos_phi(wo)/ior,
+                   -sin_theta(wo)*sin_phi(wo)/ior,
+                   -sqrt(1 - sin_theta(wo)*sin_theta(wo)/(ior*ior)));
+    if (sin_theta(wo) >= ior) {
+      return false;
+    } else {
+      return true;
+    }
+  } else {
+    // from material to air
     *wi = Vector3D(-sin_theta(wo)*cos_phi(wo)*ior,
                    -sin_theta(wo)*sin_phi(wo)*ior,
                    sqrt(1 - sin_theta(wo)*sin_theta(wo)*(ior*ior)));
-    if (ior*sin_theta(wo) >= 1) return false;
-    else return true;
+    if (ior*sin_theta(wo) >= 1) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
 }

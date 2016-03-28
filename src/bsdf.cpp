@@ -113,6 +113,7 @@ Spectrum GlassBSDF::f(const Vector3D& wo, const Vector3D& wi) {
 
   // }
 
+
   Vector3D w_in;
   if (!refract(wo, &w_in, ior)) {
     reflect(wo, &w_in);

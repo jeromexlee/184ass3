@@ -581,7 +581,7 @@ Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
       u = rayPos.x/sampleBuffer.w;
       v = rayPos.y/sampleBuffer.h;
       Ray generated_ray = camera->generate_ray(u, v);
-      generated_ray.depth = max_ray_depth;
+      // generated_ray.depth = max_ray_depth;
       s += trace_ray(generated_ray, true);
     }
   }

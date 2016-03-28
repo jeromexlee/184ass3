@@ -469,7 +469,7 @@ Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection
   if(coin_flip(prr)){
     Ray rs = Ray(EPS_D*o2w*w_in+hit_p,o2w*w_in,(int)r.depth-1);
     in = trace_ray(rs,isect.bsdf->is_delta());
-    return isect.bsdf->f(w_out, w_in)*in*abs(w_in.z)/(pdf*(1-prr));
+    return isect.bsdf->f(w_out, w_in)*in*abs(w_in.z)/(pdf*prr);
   }
   else{
     return Spectrum();  

@@ -458,8 +458,19 @@ Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection
   Vector3D hit_p = r.o + r.d * isect.t;
   Vector3D w_out = w2o * (-r.d);
 
-  return Spectrum();
-
+  Vector3D w_in;
+  float pdf;
+  Spectrum in;
+  Spectrum sample = isect.bsdf->sample_f(w_out, &w_in, &pdf);
+  float prr = 10*sample.illum();
+  if(coin_flip(prr)){
+    Ray rs = Ray(EPS_D*o2w*w_in+hit_p,o2w*w_in,(int)r.depth-1);
+    in = trace_ray(rs,isect.bsdf->is_delta());
+    return isect.bsdf->f(w_out, w_in)*in*abs(w_in.z)/(pdf*(1-prr));
+  }
+  else{
+    return Spectrum();  
+  }
 }
 
 Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {

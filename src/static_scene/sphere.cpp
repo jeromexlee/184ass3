@@ -61,7 +61,7 @@ bool Sphere::intersect(const Ray& r, Intersection *i) const {
   // When an intersection takes place, the Intersection data should be updated
   // correspondingly.
   
-  double t1 = 0, t2 = 0;
+  double t1 = 0, t2 = 0, t = 0;
   if (test(r,t1,t2)){
     if(t1>=r.min_t && t1<=r.max_t){
       t = t1;

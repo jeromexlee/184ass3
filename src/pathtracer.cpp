@@ -463,7 +463,7 @@ Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection
   Spectrum in;
   Spectrum sample = isect.bsdf->sample_f(w_out, &w_in, &pdf);
   float prr = 10*sample.illum();
-  printf("%f\n", prr);
+  // printf("%f\n", prr);
   if(prr>1) prr = 1;
   if(prr<0) prr = 0;
   if(coin_flip(prr)){

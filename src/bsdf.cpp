@@ -102,55 +102,44 @@ Spectrum RefractionBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) 
 // Glass BSDF //
 
 Spectrum GlassBSDF::f(const Vector3D& wo, const Vector3D& wi) {
-  // return Spectrum();
+  return Spectrum();
   // Vector3D w_in;
-  // if(refract(wo, &w_in, ior)){
+  // if (!refract(wo, &w_in, ior)) {
   //   reflect(wo, &w_in);
-  //   if (w_in == wi) return reflectance/cos_theta(wo);
-  //   else return Spectrum();
+  //   if (w_in == wi) {
+  //     return reflectance/cos_theta(wo);
+  //   } else {
+  //     return Spectrum();
+  //   }
+  // } else {
+  //   double r_zero, r;
+  //   if (cos_theta(wo) > 0) {
+  //     r_zero = (1-ior)*(1-ior)/((1+ior)*(1+ior));
+  //   } else {
+  //     r_zero = (ior-1)*(ior-1)/((1+ior)*(1+ior));
+  //   }
+  //   r = r_zero + (1-r_zero)*pow((1-abs_cos_theta(wo)), 5);
+  //   r = clamp(r, 0, 1);
+  //   if (coin_flip(r)) {
+  //     reflect(wo, &w_in);
+  //     if (w_in == wi) {
+  //       return r*reflectance/cos_theta(wo);
+  //     } else {
+  //       return Spectrum();
+  //     }
+  //   } else {
+  //     refract(wo, &w_in, ior);
+  //     if (wi == w_in) {
+  //       if (cos_theta(wo) > 0) {
+  //         return (1-r)*transmittance*ior*ior/abs_cos_theta(wo);
+  //       } else {
+  //         return (1-r)*transmittance/(ior*ior*abs_cos_theta(wo));
+  //       }
+  //     } else {
+  //       return Spectrum();
+  //     }
+  //   }
   // }
-  // else {
-
-  // }
-
-
-  Vector3D w_in;
-  if (!refract(wo, &w_in, ior)) {
-    reflect(wo, &w_in);
-    if (w_in == wi) {
-      return reflectance/cos_theta(wo);
-    } else {
-      return Spectrum();
-    }
-  } else {
-    double r_zero, r;
-    if (cos_theta(wo) > 0) {
-      r_zero = (1-ior)*(1-ior)/((1+ior)*(1+ior));
-    } else {
-      r_zero = (ior-1)*(ior-1)/((1+ior)*(1+ior));
-    }
-    r = r_zero + (1-r_zero)*pow((1-abs_cos_theta(wo)), 5);
-    r = clamp(r, 0, 1);
-    if (coin_flip(r)) {
-      reflect(wo, &w_in);
-      if (w_in == wi) {
-        return r*reflectance/cos_theta(wo);
-      } else {
-        return Spectrum();
-      }
-    } else {
-      refract(wo, &w_in, ior);
-      if (wi == w_in) {
-        if (cos_theta(wo) > 0) {
-          return (1-r)*transmittance*ior*ior/abs_cos_theta(wo);
-        } else {
-          return (1-r)*transmittance/(ior*ior*abs_cos_theta(wo));
-        }
-      } else {
-        return Spectrum();
-      }
-    }
-  }
 }
 
 Spectrum GlassBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) {

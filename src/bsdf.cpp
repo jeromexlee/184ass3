@@ -60,7 +60,6 @@ Spectrum MirrorBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) {
   reflect(wo, wi);
   *pdf = 1;
   return reflectance/wo.z;
-  }
 }
 
 // Glossy BSDF //

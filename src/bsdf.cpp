@@ -46,10 +46,10 @@ Spectrum MirrorBSDF::f(const Vector3D& wo, const Vector3D& wi) {
   // return Spectrum();
   Vector3D w_in;
   reflect(wo, &w_in);
-  if (w_in == wi) {
-    return reflectance/wo.z;
-  } else {
+  if (w_in != wi) {
     return Spectrum();
+  } else {
+    return reflectance/wo.z;
   }
 }
 
@@ -59,13 +59,7 @@ Spectrum MirrorBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) {
   // Implement MirrorBSDF
   reflect(wo, wi);
   *pdf = 1;
-  return Spectrum();
-  Vector3D w_in;
-  reflect(wo, &w_in);
-  if (w_in == *wi) {
-    return reflectance/wo.z;
-  } else {
-    return Spectrum();
+  return reflectance/wo.z;
   }
 }
 

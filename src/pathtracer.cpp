@@ -426,6 +426,7 @@ Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& 
   Vector3D w_in, wi;
   int num_samples = ns_area_light;
   for(SceneLight *l : scene->lights){
+    L_temp = Spectrum(); //Bug
     if (l->is_delta_light()){
       num_samples = 1;
     }

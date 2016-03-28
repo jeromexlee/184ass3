@@ -540,26 +540,52 @@ Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
   // Make a loop that generates num_samples camera rays and traces them 
   // through the scene. Return the average Spectrum. 
 
+  // int num_samples = ns_aa; // total samples to evaluate
+  // Vector2D origin = Vector2D(x,y); // bottom left corner of the pixel
+  // size_t w = sampleBuffer.w;
+  // size_t h = sampleBuffer.h;
+  
+  // if (ns_aa == 1){
+  //   return trace_ray(camera->generate_ray((x+0.5)/w,(y+0.5)/h),true);
+  // }
+
+  // Spectrum ss = Spectrum();
+  // for(int i = 0; i < num_samples; i++){
+  //   Vector2D sample = gridSampler->get_sample().unit();
+  //   Spectrum samples = trace_ray(camera->generate_ray((x+sample.x)/(float)w,(y+sample.y)/(float)h),true);
+  //   // ss.r += samples.r; ss.g += samples.g; ss.b += samples.b;
+  //   ss += samples;
+  // }
+  // // ss.r = ss.r/ns_aa; ss.g = ss.g/ns_aa; ss.b = ss.b/ns_aa; 
+  // ss = ss/(float)num_samples;
+  // return ss;
+  // // return Spectrum();
+
+
   int num_samples = ns_aa; // total samples to evaluate
   Vector2D origin = Vector2D(x,y); // bottom left corner of the pixel
-  size_t w = sampleBuffer.w;
-  size_t h = sampleBuffer.h;
-  
-  if (ns_aa == 1){
-    return trace_ray(camera->generate_ray((x+0.5)/w,(y+0.5)/h),true);
-  }
 
-  Spectrum ss = Spectrum();
-  for(int i = 0; i < num_samples; i++){
-    Vector2D sample = gridSampler->get_sample().unit();
-    Spectrum samples = trace_ray(camera->generate_ray((x+sample.x)/(float)w,(y+sample.y)/(float)h),true);
-    // ss.r += samples.r; ss.g += samples.g; ss.b += samples.b;
-    ss += samples;
+  double u, v, ox, oy;
+  ox = x;
+  oy = y;
+  Vector2D delta, rayPos;
+  Spectrum s;
+  if (num_samples == 1) {
+    u = (ox + 0.5)/sampleBuffer.w;
+    v = (oy + 0.5)/sampleBuffer.h;
+    s = trace_ray(camera->generate_ray(u, v), true);
+  } else {
+    for (int i = 0; i < num_samples; i++) {
+      delta = gridSampler->get_sample();
+      rayPos = origin + delta;
+      u = rayPos.x/sampleBuffer.w;
+      v = rayPos.y/sampleBuffer.h;
+      Ray generated_ray = camera->generate_ray(u, v);
+      generated_ray.depth = max_ray_depth;
+      s += trace_ray(generated_ray, true);
+    }
   }
-  // ss.r = ss.r/ns_aa; ss.g = ss.g/ns_aa; ss.b = ss.b/ns_aa; 
-  ss = ss/(float)num_samples;
-  return ss;
-  // return Spectrum();
+  return s/num_samples;
 }
 
 void PathTracer::raytrace_tile(int tile_x, int tile_y,

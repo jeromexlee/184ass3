@@ -63,43 +63,47 @@ BVHNode *BVHAccel::construct_bvh(const std::vector<Primitive*>& prims, size_t ma
     centroid_box.expand(c);
   }
 
+  // You'll want to adjust this code.
+  // Right now we just return a single node containing all primitives.
   BVHNode *node = new BVHNode(bbox);
-  node->prims = new vector<Primitive *>(prims);
-  if (prims.size() > max_leaf_size) {
-    double xVal = bbox.extent[0];
-    double yVal = bbox.extent[1];
-    double zVal = bbox.extent[2];
-    double axisVal = max(xVal, max(yVal, zVal));
-    int axis;
-    if (axisVal == xVal) {
-      axis = 0;
-    } else if (axisVal == yVal) {
-      axis = 1;
-    } else {
-      axis = 2;
-    }
-    vector<Primitive *> leftPrims = vector<Primitive *>();
-    vector<Primitive *> rightPrims = vector<Primitive *>();
-    double split = (centroid_box.max[axis] + centroid_box.min[axis])/2;
-    for (Primitive *p : prims) {
-      Vector3D c = p->get_bbox().centroid();
-      if (c[axis] < split) {
-        leftPrims.push_back(p);
-      } else {
-        rightPrims.push_back(p);
-      }
-    }
-    if (leftPrims.size() != 0) {
-      node->l = construct_bvh(leftPrims, max_leaf_size);
-    }
-    if (rightPrims.size() != 0) {
-      node->r = construct_bvh(rightPrims, max_leaf_size);
-    }
-  } else {
+  node->prims = new vector<Primitive *>(prims);  
+  if (prims.size() <= max_leaf_size){
     node->l = NULL;
     node->r = NULL;
   }
+  else {
+    Vector3D extent = bbox.extent;
+    int axis = 0;
+    if(extent.x >= extent.y && extent.x >= extent.z){
+      axis = 0;
+    }
+    else if(extent.y >= extent.x && extent.y >= extent.z){
+      axis = 1;
+    }
+    else{
+      axis = 2;
+    }
+    vector<Primitive *> lp = vector<Primitive *>();
+    vector<Primitive *> rp = vector<Primitive *>();
+    double split = (centroid_box.max[axis] + centroid_box.min[axis])/2;
+    for (Primitive *p : prims){
+      Vector3D c = p->get_bbox().centroid();
+      if(split >= c[axis]){
+        lp.push_back(p);
+      }
+      else{
+        rp.push_back(p);
+      }
+    }
+    if(lp.size() > 0){
+      node->l = construct_bvh(lp, max_leaf_size);  
+    }
+    if(rp.size() > 0){
+      node->r = construct_bvh(rp, max_leaf_size);      
+    }
+  }
   return node;
+
 }
 
 
@@ -108,23 +112,21 @@ bool BVHAccel::intersect(const Ray& ray, BVHNode *node) const {
   // TODO Part 2, task 3:
   // Implement BVH intersection.
   // Currently, we just naively loop over every primitive.
-  double start = ray.min_t;
-  double end = ray.max_t;
-  if (!node->bb.intersect(ray, start, end)) {
-    return false;
-  }
-  if (node->isLeaf()) {
-    for (Primitive *p : *(node->prims)) {
+  double t0 = ray.min_t;
+  double t1 = ray.max_t;
+  if(!node->bb.intersect(ray, t0, t1)) return false;
+  if(node->isLeaf()){
+      for (Primitive *p : *(node->prims)) {
       total_isects++;
-      if (p->intersect(ray)) {
+      if (p->intersect(ray)) 
         return true;
-      }
     }
     return false;
   }
-  bool leftVal = intersect(ray, node->l);
-  bool rightVal = intersect(ray, node->r);
-  return leftVal || rightVal;
+  bool b1 = intersect(ray,node->l);
+  bool b2 = intersect(ray,node->r);
+  return b1 || b2;
+
 }
 
 bool BVHAccel::intersect(const Ray& ray, Intersection* i, BVHNode *node) const {
@@ -132,24 +134,22 @@ bool BVHAccel::intersect(const Ray& ray, Intersection* i, BVHNode *node) const {
   // TODO Part 2, task 3:
   // Implement BVH intersection.
   // Currently, we just naively loop over every primitive.
-  double start = ray.min_t;
-  double end = ray.max_t;
-  if (!node->bb.intersect(ray, start, end)) {
-    return false;
-  }
-  if (node->isLeaf()) {
-    bool r = false;
+  double t0 = ray.min_t;
+  double t1 = ray.max_t;
+  if(!node->bb.intersect(ray, t0, t1)) return false;
+  if (node->isLeaf()){
+    bool hit = false;
     for (Primitive *p : *(node->prims)) {
       total_isects++;
-      if (p->intersect(ray, i)) {
-        r = true;
-      }
+      if (p->intersect(ray, i)) 
+        hit = true;
     }
-    return r;
+    return hit;
   }
-  bool leftVal = intersect(ray, i, node->l);
-  bool rightVal = intersect(ray, i, node->r);
-  return leftVal || rightVal;
+  bool b1 = intersect(ray,i,node->l);
+  bool b2 = intersect(ray,i,node->r);
+  return b1 || b2;
+
 }
 
 }  // namespace StaticScene

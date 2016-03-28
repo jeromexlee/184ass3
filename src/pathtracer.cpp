@@ -421,31 +421,28 @@ Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& 
   const Vector3D& hit_p = r.o + r.d * isect.t;
   const Vector3D& w_out = w2o * (-r.d);
 
-  Spectrum L_out, L_sample;
-  Vector3D wi, w_in;
+  Spectrum L_out = Spectrum(), L_s, L_temp;
   float distToLight, pdf;
-  Ray hitToSrc = Ray(r.o, r.d);
-  L_out = Spectrum();
-  int sampleNum = ns_area_light;
-
-  for (SceneLight* sl : scene->lights) {
-    if (sl->is_delta_light()) {
-      sampleNum = 1;
+  Vector3D w_in, wi;
+  int num_samples = ns_area_light;
+  for(SceneLight *l : scene->lights){
+    L_temp = Spectrum(); //Bug
+    if (l->is_delta_light()){
+      num_samples = 1;
     }
-    for (int i = 0; i < sampleNum; i++) {
-      L_sample = sl->sample_L(hit_p, &wi, &distToLight, &pdf);
-      w_in = w2o * wi;
-      if (w_in.z < 0) {
+    for(int i = 0; i < num_samples; i++){
+      L_s = l->sample_L(hit_p,&wi,&distToLight,&pdf);
+      w_in =w2o*wi;
+      if(w_in.z<0){
         continue;
-      } else {
-        hitToSrc = Ray(EPS_D*wi + hit_p, wi, distToLight);
-        if (!bvh->intersect(hitToSrc)) {
-          L_sample = isect.bsdf->f(w_out, w_in)*L_sample*w_in.z;
-          L_out += L_sample/pdf;
-        }
       }
+      if(!bvh->intersect(Ray(EPS_D*wi+hit_p,wi,distToLight))){
+        L_temp+=(isect.bsdf->f(w_out,w_in)*L_s*w_in.z)/pdf;
+      }
+      
     }
-    L_out /= sampleNum;
+   L_temp/=num_samples; 
+   L_out+=L_temp;
   }
   return L_out;
 }
@@ -463,23 +460,19 @@ Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection
 
   Vector3D w_in;
   float pdf;
-  Spectrum incoming;
-
-  Spectrum s = isect.bsdf->sample_f(w_out, &w_in, &pdf);
-  double p = 10*s.illum();
-  if (p > 1) {
-    p = 1;
+  Spectrum in;
+  Spectrum sample = isect.bsdf->sample_f(w_out, &w_in, &pdf);
+  float prr = 10*sample.illum();
+  // printf("%f\n", prr);
+  if(prr>1) prr = 1;
+  if(prr<0) prr = 0;
+  if(coin_flip(prr)){
+    Ray rs = Ray(EPS_D*o2w*w_in+hit_p,o2w*w_in,(int)r.depth-1);
+    in = trace_ray(rs,isect.bsdf->is_delta());
+    return isect.bsdf->f(w_out, w_in)*in*abs(w_in.z)/(pdf*prr);
   }
-  if (p < 0) {
-    p = 0;
-  }
-  if (coin_flip(p)) {
-    int depth = r.depth-1;
-    Ray r_indirect = Ray(EPS_D*o2w*w_in + hit_p, o2w*w_in, depth);
-    incoming = trace_ray(r_indirect, isect.bsdf->is_delta());
-    return isect.bsdf->f(w_out, w_in)*incoming*abs(w_in.z)/(pdf*p);
-  } else {
-    return Spectrum();
+  else{
+    return Spectrum();  
   }
 }
 
@@ -529,28 +522,26 @@ Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
 
   int num_samples = ns_aa; // total samples to evaluate
   Vector2D origin = Vector2D(x,y); // bottom left corner of the pixel
-
-  double u, v, ox, oy;
-  ox = x;
-  oy = y;
-  Vector2D delta, rayPos;
-  Spectrum s;
-  if (num_samples == 1) {
-    u = (ox + 0.5)/sampleBuffer.w;
-    v = (oy + 0.5)/sampleBuffer.h;
-    s = trace_ray(camera->generate_ray(u, v), true);
-  } else {
-    for (int i = 0; i < num_samples; i++) {
-      delta = gridSampler->get_sample();
-      rayPos = origin + delta;
-      u = rayPos.x/sampleBuffer.w;
-      v = rayPos.y/sampleBuffer.h;
-      Ray generated_ray = camera->generate_ray(u, v);
-      generated_ray.depth = max_ray_depth;
-      s += trace_ray(generated_ray, true);
-    }
+  size_t w = sampleBuffer.w;
+  size_t h = sampleBuffer.h;
+  
+  if (ns_aa == 1){
+    return trace_ray(camera->generate_ray((x+0.5)/w,(y+0.5)/h),true);
   }
-  return s/num_samples;
+
+  Spectrum ss = Spectrum();
+  for(int i = 0; i < num_samples; i++){
+    Vector2D sample = gridSampler->get_sample().unit();
+    Ray new_ray = camera->generate_ray((x+sample.x)/(float)w,(y+sample.y)/(float)h);
+    new_ray.depth = max_ray_depth; //bug
+    Spectrum samples = trace_ray(new_ray,true);
+    // ss.r += samples.r; ss.g += samples.g; ss.b += samples.b;
+    ss += samples;
+  }
+  // ss.r = ss.r/ns_aa; ss.g = ss.g/ns_aa; ss.b = ss.b/ns_aa; 
+  ss = ss/(float)num_samples;
+  return ss;
+  // return Spectrum();
 }
 
 void PathTracer::raytrace_tile(int tile_x, int tile_y,

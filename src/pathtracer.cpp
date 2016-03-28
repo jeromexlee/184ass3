@@ -458,42 +458,42 @@ Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection
   Vector3D hit_p = r.o + r.d * isect.t;
   Vector3D w_out = w2o * (-r.d);
 
-  // Vector3D w_in;
-  // float pdf;
-  // Spectrum in;
-  // Spectrum sample = isect.bsdf->sample_f(w_out, &w_in, &pdf);
-  // float prr = 10*sample.illum();
-  // printf("%f\n", prr);
-  // if(prr>1) prr = 1;
-  // if(prr<0) prr = 0;
-  // if(coin_flip(prr)){
-  //   Ray rs = Ray(EPS_D*o2w*w_in+hit_p,o2w*w_in,(int)r.depth-1);
-  //   in = trace_ray(rs,isect.bsdf->is_delta());
-  //   return isect.bsdf->f(w_out, w_in)*in*abs(w_in.z)/(pdf*(1-prr));
-  // }
-  // else{
-  //   return Spectrum();  
-  // }
   Vector3D w_in;
   float pdf;
-  Spectrum incoming;
+  Spectrum in;
+  Spectrum sample = isect.bsdf->sample_f(w_out, &w_in, &pdf);
+  float prr = 10*sample.illum();
+  printf("%f\n", prr);
+  if(prr>1) prr = 1;
+  if(prr<0) prr = 0;
+  if(coin_flip(prr)){
+    Ray rs = Ray(EPS_D*o2w*w_in+hit_p,o2w*w_in,(int)r.depth-1);
+    in = trace_ray(rs,isect.bsdf->is_delta());
+    return isect.bsdf->f(w_out, w_in)*in*abs(w_in.z)/(pdf*(1-prr));
+  }
+  else{
+    return Spectrum();  
+  }
+  // Vector3D w_in;
+  // float pdf;
+  // Spectrum incoming;
 
-  Spectrum s = isect.bsdf->sample_f(w_out, &w_in, &pdf);
-  double p = 10*s.illum();
-  if (p > 1) {
-    p = 1;
-  }
-  if (p < 0) {
-    p = 0;
-  }
-  if (coin_flip(p)) {
-    int depth = r.depth-1;
-    Ray r_indirect = Ray(EPS_D*o2w*w_in + hit_p, o2w*w_in, depth);
-    incoming = trace_ray(r_indirect, isect.bsdf->is_delta());
-    return isect.bsdf->f(w_out, w_in)*incoming*abs(w_in.z)/(pdf*p);
-  } else {
-    return Spectrum();
-  }
+  // Spectrum s = isect.bsdf->sample_f(w_out, &w_in, &pdf);
+  // double p = 10*s.illum();
+  // if (p > 1) {
+  //   p = 1;
+  // }
+  // if (p < 0) {
+  //   p = 0;
+  // }
+  // if (coin_flip(p)) {
+  //   int depth = r.depth-1;
+  //   Ray r_indirect = Ray(EPS_D*o2w*w_in + hit_p, o2w*w_in, depth);
+  //   incoming = trace_ray(r_indirect, isect.bsdf->is_delta());
+  //   return isect.bsdf->f(w_out, w_in)*incoming*abs(w_in.z)/(pdf*p);
+  // } else {
+  //   return Spectrum();
+  // }
 }
 
 Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
@@ -553,7 +553,7 @@ Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
   for(int i = 0; i < num_samples; i++){
     Vector2D sample = gridSampler->get_sample().unit();
     Ray new_ray = camera->generate_ray((x+sample.x)/(float)w,(y+sample.y)/(float)h);
-    new_ray.depth = max_ray_depth;
+    new_ray.depth = max_ray_depth; //bug
     Spectrum samples = trace_ray(new_ray,true);
     // ss.r += samples.r; ss.g += samples.g; ss.b += samples.b;
     ss += samples;
@@ -562,32 +562,6 @@ Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
   ss = ss/(float)num_samples;
   return ss;
   // return Spectrum();
-
-
-  // int num_samples = ns_aa; // total samples to evaluate
-  // Vector2D origin = Vector2D(x,y); // bottom left corner of the pixel
-
-  // double u, v, ox, oy;
-  // ox = x;
-  // oy = y;
-  // Vector2D delta, rayPos;
-  // Spectrum s;
-  // if (num_samples == 1) {
-  //   u = (ox + 0.5)/sampleBuffer.w;
-  //   v = (oy + 0.5)/sampleBuffer.h;
-  //   s = trace_ray(camera->generate_ray(u, v), true);
-  // } else {
-  //   for (int i = 0; i < num_samples; i++) {
-  //     delta = gridSampler->get_sample();
-  //     rayPos = origin + delta;
-  //     u = rayPos.x/sampleBuffer.w;
-  //     v = rayPos.y/sampleBuffer.h;
-  //     Ray generated_ray = camera->generate_ray(u, v);
-  //     generated_ray.depth = max_ray_depth;
-  //     s += trace_ray(generated_ray, true);
-  //   }
-  // }
-  // return s/num_samples;
 }
 
 void PathTracer::raytrace_tile(int tile_x, int tile_y,

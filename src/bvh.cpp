@@ -181,6 +181,10 @@ bool BVHAccel::intersect(const Ray& ray, Intersection* i, BVHNode *node) const {
       }
     }
     return r;
+  }
+  bool leftVal = intersect(ray, i, node->l);
+  bool rightVal = intersect(ray, i, node->r);
+  return leftVal || rightVal;
 }
 
 }  // namespace StaticScene

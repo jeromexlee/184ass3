@@ -421,7 +421,7 @@ Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& 
   const Vector3D& hit_p = r.o + r.d * isect.t;
   const Vector3D& w_out = w2o * (-r.d);
 
-  Spectrum L_out = Spectrum(), L_s;
+  Spectrum L_out = Spectrum(), L_s, L_temp;
   float distToLight, pdf;
   Vector3D w_in, wi;
   int num_samples = ns_area_light;
@@ -436,13 +436,14 @@ Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& 
         continue;
       }
       if(!bvh->intersect(Ray(EPS_D*wi+hit_p,wi,distToLight))){
-        L_out+=(isect.bsdf->f(w_out,w_in)*L_s*w_in.z)/pdf;
+        L_temp+=(isect.bsdf->f(w_out,w_in)*L_s*w_in.z)/pdf;
       }
       
     }
-   L_out+=L_s/num_samples; 
+   L_temp+=L_s/num_samples; 
+   L_out+=L_temp;
   }
-  return L_out;
+  return L_out/scene->lights.size();
 }
 
 Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection& isect) {

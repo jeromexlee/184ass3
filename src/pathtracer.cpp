@@ -440,10 +440,10 @@ Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& 
       }
       
     }
-   L_temp+=L_s/num_samples; 
+   L_temp/=num_samples; 
    L_out+=L_temp;
   }
-  return L_out/scene->lights.size();
+  return L_out;
 }
 
 Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection& isect) {

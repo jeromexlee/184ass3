@@ -37,6 +37,8 @@ bool Sphere::intersect(const Ray& r) const {
   // Note that you might want to use the the Sphere::test helper here.
   double t1 = 0, t2 = 0;
   if (test(r,t1,t2)){
+    if(t1<r.min_t || t1>r.max_t) return false;
+    if(t2<r.min_t || t2>r.max_t) return false;
     r.max_t = t1;
     return true;
   }
@@ -56,6 +58,8 @@ bool Sphere::intersect(const Ray& r, Intersection *i) const {
   
   double t1 = 0, t2 = 0;
   if (test(r,t1,t2)){
+    if(t1<r.min_t || t1>r.max_t) return false;
+    if(t2<r.min_t || t2>r.max_t) return false;
     r.max_t = t1;
     i->t = t1;
     i->primitive = this;

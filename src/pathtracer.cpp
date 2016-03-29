@@ -464,12 +464,13 @@ Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection
   Spectrum sample = isect.bsdf->sample_f(w_out, &w_in, &pdf);
   float prr = 10*sample.illum();
   // printf("%f\n", prr);
-  if(prr>1) prr = 1;
-  if(prr<0) prr = 0;
+  // if(prr>1) prr = 1;
+  // if(prr<0) prr = 0;
+  prr = clamp(prr, 0, 1);
   if(coin_flip(prr)){
     Ray rs = Ray(EPS_D*o2w*w_in+hit_p,o2w*w_in,(int)r.depth-1);
     in = trace_ray(rs,isect.bsdf->is_delta());
-    return isect.bsdf->f(w_out, w_in)*in*abs(w_in.z)/(pdf*prr);
+    return sample*in*abs(w_in.z)/(pdf*prr);
   }
   else{
     return Spectrum();  

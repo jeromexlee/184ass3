@@ -102,50 +102,6 @@ Spectrum RefractionBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) 
 // Glass BSDF //
 
 Spectrum GlassBSDF::f(const Vector3D& wo, const Vector3D& wi) {
-  // return Spectrum();
-  // Vector3D w_in;
-  // if (!refract(wo, &w_in, ior)) {
-  //   reflect(wo, &w_in);
-  //   if (w_in == wi) {
-  //     return reflectance/cos_theta(wo);
-  //   } else {
-  //     return Spectrum();
-  //   }
-  // } else {
-  //   double r_zero, r;
-  //   if (cos_theta(wo) > 0) {
-  //     r_zero = (1-ior)*(1-ior)/((1+ior)*(1+ior));
-  //   } else {
-  //     r_zero = (ior-1)*(ior-1)/((1+ior)*(1+ior));
-  //   }
-  //   r = r_zero + (1-r_zero)*pow((1-abs_cos_theta(wo)), 5);
-  //   r = clamp(r, 0, 1);
-  //   if (coin_flip(r)) {
-  //     reflect(wo, &w_in);
-  //     if (w_in == wi) {
-  //       return r*reflectance/cos_theta(wo);
-  //     } else {
-  //       return Spectrum();
-  //     }
-  //   } else {
-  //     refract(wo, &w_in, ior);
-  //     if (wi == w_in) {
-  //       if (cos_theta(wo) > 0) {
-  //         return (1-r)*transmittance*ior*ior/abs_cos_theta(wo);
-  //       } else {
-  //         return (1-r)*transmittance/(ior*ior*abs_cos_theta(wo));
-  //       }
-  //     } else {
-  //       return Spectrum();
-  //     }
-  //   }
-  // }
-  Vector3D w_in;
-  if (refract(wo, &w_in, ior)) {
-    if (w_in == wi) {
-      return transmittance/abs_cos_theta(wo);
-    }
-  }
   return Spectrum();
 }
 
@@ -156,36 +112,43 @@ Spectrum GlassBSDF::sample_f(const Vector3D& wo, Vector3D* wi, float* pdf) {
   
   // return Spectrum();
 
-  // if (!refract(wo, wi, ior)) {
-  //   *pdf = 1;
-  //   reflect(wo, wi);
-  //   return reflectance/cos_theta(wo);
-  // } else {
-  //   double r_zero, r;
-  //   if (cos_theta(wo) > 0) {
-  //     r_zero = (1-ior)*(1-ior)/((1+ior)*(1+ior));
-  //   } else {
-  //     r_zero = (ior-1)*(ior-1)/((1+ior)*(1+ior));
-  //   }
-  //   r = r_zero + (1-r_zero)*pow((1-abs_cos_theta(wo)), 5);
-  //   r = clamp(r, 0, 1);
-  //   if (coin_flip(r)) {
-  //     *pdf = r;
-  //     reflect(wo, wi);
-  //     return r*reflectance/abs_cos_theta(wo);
-  //   } else {
-  //     *pdf = 1-r;
-  //     refract(wo, wi, ior);
-  //     if (cos_theta(wo) > 0) {
-  //       return (1-r)*transmittance*ior*ior/abs_cos_theta(wo);
-  //     } else {
-  //       return (1-r)*transmittance/(ior*ior*abs_cos_theta(wo));
-  //     }
-  //   }
-  // }
-  refract(wo, wi, ior);
-  *pdf = 1;
-  return f(wo, *wi);
+  if (!refract(wo, wi, ior)) {
+    *pdf = 1;
+    reflect(wo, wi);
+    return reflectance/cos_theta(wo);
+  } else {
+    double r0, r;
+    if (cos_theta(wo) > 0) {
+      r0 = pow((1-ior),2)/pow((1+ior),2);
+    } else {
+      r0 = pow((ior-1),2)/pow((1+ior),2);
+    }
+    r = r0 + (1-r0)*pow((1-abs_cos_theta(wo)), 5);
+    r = clamp(r, 0, 1);
+    if (coin_flip(r)) {
+      *pdf = r;
+      reflect(wo, wi);
+      return r*reflectance/abs_cos_theta(*wi);
+    } else {
+      *pdf = 1-r;
+      // refract(wo, wi, ior);
+      if (cos_theta(wo) > 0) {
+        // printf("%f and %f\n",ior*ior, abs_cos_theta(*wi));
+        return (1-r)*transmittance/abs_cos_theta(*wi);
+      } else {
+        return (1-r)*transmittance*(ior*ior)/abs_cos_theta(*wi);
+      }
+    }
+  }
+
+
+  // refract(wo, wi, ior);
+  // *pdf = 1;
+  // return f(wo, *wi);
+
+  // reflect(wo, wi);
+  // *pdf = 1;
+  // return reflectance/wo.z;
 }
 
 void BSDF::reflect(const Vector3D& wo, Vector3D* wi) {
